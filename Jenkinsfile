@@ -1,27 +1,26 @@
 pipeline {
-    agent {
-        label 'master'
+    agent any 
+    options {
+        
+        buildDiscarder(logRotator(numToKeepStr: '2', artifactNumToKeepStr: '1'))
     }
-    stages {
-        stage('PRINT') {
-            steps {
-                sh 'echo $JOB_NAME'
-            }
-        }
-        stage('WRITE') {
-            steps {
-                sh 'echo $BUILD_NUMBER >> build_number'
-            }
-        }
-        stage('READ') {
-            steps {
-                sh 'cat build_number'
-            }
-        }
-    }
-    post {
-        success {
-            archiveArtifacts artifacts: 'build_number', fingerprint: true
-        }
-    }
+
+          stages {
+              stage ('Unit Tests'){
+                  steps{
+                     sh 'ant -f test.xml -v'
+                     junit 'reports/result.xml'
+              }
+          }
+          stage ('build'){
+              steps{
+                  sh 'ant -f build.xml -v'
+              }
+          }
+}
+post {
+    always {
+          archiveArtifacts artifacts: 'dist/*.jar', fingerprint: true
+	}
+   }
 }
